@@ -89,7 +89,15 @@ public class Shen {
         register(Primitives.class, RT::defun);
         register(Overrides.class, RT::override);
 
-        asList(Math.class, System.class).forEach(Primitives::KL_import);
+        try {
+            Class.forName("clojure.core$_");
+            asList(Math.class, System.class, Class.forName("clojure.core$read_string"),Class.forName("clojure.core$str")
+                    ,Class.forName("clojure.core$slurp"))
+                    .forEach(Primitives::KL_import);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+        //(.invoke (clojure.core$str.) (.invoke (clojure.core$read_string.) "3"))
     }
 
     interface LLPredicate { boolean test(long a, long b); }
@@ -396,7 +404,7 @@ public class Shen {
                     cons =!cons.isList() || EMPTY_LIST.equals(cons.cdr) ? null : (Cons) cons.cdr;
                 }
             }
-         }
+        }
     }
 
     public static final class Primitives {
@@ -421,7 +429,7 @@ public class Shen {
 
         public static Class KL_import(Symbol s) throws ClassNotFoundException {
             Class aClass = Class.forName(s.symbol);
-            return set(intern(aClass.getSimpleName()), aClass);
+            return set(intern(aClass.getName()), aClass);
         }
 
         static Class KL_import(Class type) {
@@ -444,7 +452,7 @@ public class Shen {
             throw new RuntimeException(s, null, false, false) {};
         }
 
-       public static String error_to_string(Throwable e) {
+        public static String error_to_string(Throwable e) {
             return e.getMessage() == null ? e.toString() : e.getMessage();
         }
 
@@ -653,9 +661,9 @@ public class Shen {
         for (String file : asList("toplevel", "core", "sys", "sequent", "yacc", "reader",
                 "prolog", "track", "load", "writer", "macros", "declarations", "types", "t-star"))
             load("klambda/" + file, Callable.class).newInstance().call();
-	//Loading custom klambda files
+        //Loading custom klambda files
         for (String file : asList("types"))
-	    load("klambda-custom/" + file, Callable.class).newInstance().call();
+            load("klambda-custom/" + file, Callable.class).newInstance().call();
         set("shen-*installing-kl*", false);
         set("*home-directory*", getProperty("user.dir")); //Resetting it because it gets overwritten in declarations.kl
         builtins.addAll(vec(symbols.values().stream().filter(s -> !s.fn.isEmpty())));
@@ -716,7 +724,7 @@ public class Shen {
     static String version() {
         String version = null;
         try (InputStream manifest = getSystemClassLoader().getResourceAsStream("META-INF/MANIFEST.MF")) {
-                version = new Manifest(manifest).getMainAttributes().getValue(IMPLEMENTATION_VERSION);
+            version = new Manifest(manifest).getMainAttributes().getValue(IMPLEMENTATION_VERSION);
         } catch (IOException ignored) {
         }
         return version != null ? version : "<unknown>";
@@ -796,6 +804,10 @@ public class Shen {
             debug("candidates: %s", symbol.fn);
 
             if (symbol.fn.isEmpty()) {
+                if (name.equals(".abs") | name.equals("java.lang.Math.") | name.equals(".invoke"))   // (.invoke clojure.core$read "3")
+                {
+                    System.out.println();
+                }
                 MethodHandle java = javaCall(site, name, type, args);
                 if (java != null) {
                     debug("calling java: %s", java);
@@ -981,7 +993,7 @@ public class Shen {
                 else  if (canCast(method.type().parameterType(i), int.class))
                     filters[i] = asInt.asType(methodType(method.type().parameterType(i), Object.class));
                 else  if (canCast(method.type().wrap().parameterType(i), Number.class))
-                        filters[i] = asNumber.asType(methodType(method.type().parameterType(i), Object.class));
+                    filters[i] = asNumber.asType(methodType(method.type().parameterType(i), Object.class));
             if (canCast(method.type().wrap().returnType(), Number.class))
                 method = filterReturnValue(method, number.asType(methodType(long.class, method.type().returnType())));
             return filterArguments(method, 0, filters);
@@ -995,7 +1007,8 @@ public class Shen {
                         MethodHandle mh = (m instanceof Method) ? lookup.unreflect((Method) m) : lookup.unreflectConstructor((Constructor) m);
                         mh.asType(methodType(type.returnType(), vec(type.parameterList().stream()
                                 .map(c -> c.equals(Long.class) ? Integer.class : c.equals(long.class) ? int.class : c))));
-                        return filterJavaTypes(mh);
+                        return mh;
+                        //return filterJavaTypes(mh);
                     }
                 } catch (WrongMethodTypeException | IllegalAccessException ignored) {
                 }
@@ -1522,7 +1535,7 @@ public class Shen {
                         case "lambda": return closesOver(conj(scope, list.get(2)), list.get(2));
                         case "defun": return closesOver(into(scope, (Collection) list.get(2)), list.get(3));
                     }
-                    return list.stream().flatMap(o -> closesOver(scope, o));
+                return list.stream().flatMap(o -> closesOver(scope, o));
             }
             return empty();
         }
@@ -1671,7 +1684,7 @@ public class Shen {
             PrintWriter pw = new PrintWriter(err);
             TraceClassVisitor printer = new TraceClassVisitor(null, asm, pw);
             if (method == null)
-               new ClassReader(bytes).accept(printer, SKIP_DEBUG);
+                new ClassReader(bytes).accept(printer, SKIP_DEBUG);
             else {
                 ClassNode cn = new ClassNode();
                 new ClassReader(bytes).accept(cn, SKIP_DEBUG);
