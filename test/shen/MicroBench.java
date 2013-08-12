@@ -6,7 +6,7 @@ import java.util.concurrent.Callable;
 import static java.lang.System.currentTimeMillis;
 import static shen.Shen.Compiler;
 import static shen.Shen.KLReader.read;
-import static shen.Shen.Numbers.maybeNumber;
+import static shen.Shen.Operators.maybeNumber;
 import static shen.Shen.Primitives.set;
 import static shen.Shen.eval;
 

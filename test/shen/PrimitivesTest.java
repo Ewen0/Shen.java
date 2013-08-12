@@ -17,7 +17,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.junit.Assert.*;
 import static shen.Shen.*;
-import static shen.Shen.Numbers.*;
+import static shen.Shen.Operators.*;
 import static shen.Shen.Primitives.intern;
 import static shen.Shen.RT.canCast;
 
