@@ -645,13 +645,13 @@ public class Shen {
         }
     }
 
-    public static Class<Callable> compile2(String file, String tail) throws Throwable {
+    public static Class<Callable> compile2(String file, String className) throws Throwable {
         try (Reader in = resource2(format("%s.kl", file))) {
             debug("loading: %s", file);
-            Compiler compiler = new Compiler(null, file, cons(intern("do"), read(in)));
+            Compiler compiler = new Compiler(null, className, cons(intern("do"), read(in)));
             //noinspection RedundantCast
             File compilePath = new File((String) intern("*compile-path*").value());
-            File classFile = new File(compilePath, tail + ".class");
+            File classFile = new File(compilePath, className + ".class");
             if (!(compilePath.mkdirs() || compilePath.isDirectory())) throw new IOException("could not make directory: " + compilePath);
             try {
                 return compiler.load(classFile.getName().replaceAll(".class$", ".kl"), Callable.class);
