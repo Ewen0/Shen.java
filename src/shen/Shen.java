@@ -1427,6 +1427,10 @@ public class Shen {
                 fn("__lambda__", y, x);
             }
 
+            public void lambdaNoArg(boolean tail, Type returnType, Object y) throws Throwable {
+                fn("__lambdaNoArg__", y);
+            }
+
             public void freeze(boolean tail, Type returnType, Object x) throws Throwable {
                 fn("__freeze__", x);
             }
@@ -1501,6 +1505,7 @@ public class Shen {
                     switch (list.get(0).toString()) {
                         case "let": return concat(closesOver(scope, list.get(2)), closesOver(conj(scope, list.get(2)), list.get(3)));
                         case "lambda": return closesOver(conj(scope, list.get(2)), list.get(2));
+                        case "lambdaNoArg": return closesOver(conj(scope, list.get(1)), list.get(1));
                         case "defun": return closesOver(into(scope, (Collection) list.get(2)), list.get(3));
                     }
                 return list.stream().flatMap(o -> closesOver(scope, o));
